@@ -3,9 +3,11 @@ package com.kbtg.bootcamp.posttest.model.userTicket;
 import com.kbtg.bootcamp.posttest.model.lottery.LotteryEntity;
 import jakarta.persistence.*;
 
+import java.io.Serializable;
+
 @Entity
 @Table(name = "user_ticket")
-public class userTicketEntity {
+public class userTicketEntity implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

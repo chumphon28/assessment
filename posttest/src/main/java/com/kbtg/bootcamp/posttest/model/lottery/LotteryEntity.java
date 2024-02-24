@@ -1,12 +1,14 @@
 package com.kbtg.bootcamp.posttest.model.lottery;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import lombok.Data;
 
+import java.io.Serializable;
+
+@Data
 @Entity
 @Table(name = "lottery")
-public class LotteryEntity {
+public class LotteryEntity implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

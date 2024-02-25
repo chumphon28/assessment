@@ -1,4 +1,4 @@
-package com.kbtg.bootcamp.posttest.model.lottery;
+package com.kbtg.bootcamp.posttest.lottery;
 
 import jakarta.persistence.*;
 import lombok.Data;

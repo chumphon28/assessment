@@ -1,9 +1,9 @@
-package com.kbtg.bootcamp.posttest.model;
+package com.kbtg.bootcamp.posttest.exception;
 
-import lombok.Data;
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-@Data
+@Getter
 public class CustomException extends RuntimeException {
     private HttpStatus httpStatus;
     private String code;

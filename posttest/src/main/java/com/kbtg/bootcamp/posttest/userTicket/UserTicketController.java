@@ -3,6 +3,7 @@ package com.kbtg.bootcamp.posttest.userTicket;
 import com.kbtg.bootcamp.posttest.exception.CustomException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,6 +31,17 @@ public class UserTicketController {
         BuyTicketResponse buyTicketResponse = userTicketService.buyTicket(userId, ticketId);
 
         return new ResponseEntity<>(buyTicketResponse, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/users/{userId}/lotteries")
+    public ResponseEntity<GetUserTicketResponse> getUserTicket(@PathVariable("userId") String userId) {
+        if (validateBuyTicketBody(userId, 10)) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "Invalid input");
+        }
+
+        GetUserTicketResponse getUserTicketResponse = userTicketService.getUserTicket(userId);
+
+        return new ResponseEntity<>(getUserTicketResponse, HttpStatus.OK);
     }
 
     private boolean validateBuyTicketBody(String input, int size) {

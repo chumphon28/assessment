@@ -6,6 +6,10 @@ import com.kbtg.bootcamp.posttest.lottery.LotteryRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -24,7 +28,7 @@ public class UserTicketService {
 
             LotteryEntity lotteryEntity = lotteryRepository.findByTicket(ticket);
 
-            if (lotteryEntity == null) {
+            if (ObjectUtils.isEmpty(lotteryEntity)) {
                 log.error("Ticket not found");
                 throw new CustomException(HttpStatus.NOT_FOUND, "Ticket not found");
             }
@@ -39,9 +43,40 @@ public class UserTicketService {
 
         } catch (CustomException ce) {
             throw new CustomException(ce.getHttpStatus(), ce.getMessage());
-        } catch (Exception e) {
-            log.error("error while buy ticket", e);
+        } catch (Exception ex) {
+            log.error("error while buy ticket", ex);
             throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "Buy ticket failed");
         }
+    }
+
+    public GetUserTicketResponse getUserTicket(String userId) {
+
+        try {
+            List<UserTicketEntity> userTickets = userTicketRepository.findByUserId(userId);
+            if (ObjectUtils.isEmpty(userTickets)) {
+                log.error("Ticket Not found on userId: {}", userId);
+                throw new CustomException(HttpStatus.NOT_FOUND, "Ticket Not found on userId: " + userId);
+            }
+
+            List<String> tickets = new ArrayList<>();
+            int count = 0;
+            int cost = 0;
+
+            for (UserTicketEntity userTK : userTickets) {
+                tickets.add(userTK.getLottery().getTicket());
+                count += 1;
+                cost += (userTK.getLottery().getPrice());
+            }
+
+            return new GetUserTicketResponse(tickets, count, cost);
+
+        } catch (CustomException ce) {
+            throw new CustomException(ce.getHttpStatus(), ce.getMessage());
+        } catch (Exception ex) {
+            log.error("error while buy ticket", ex);
+            throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "Get Ticket failed");
+        }
+
+
     }
 }

@@ -1,8 +1,5 @@
 package com.kbtg.bootcamp.posttest.lottery;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kbtg.bootcamp.posttest.exception.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,14 +14,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static com.kbtg.bootcamp.posttest.Utils.assertException;
 import static com.kbtg.bootcamp.posttest.Utils.stringify;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -43,6 +41,7 @@ class LotteryControllerTest {
     LotteryRepository lotteryRepository;
 
     private final String ADD_TICKET_URL = "/admin/lotteries";
+    private final String GET_ALL_TICKET_URL = "/lotteries";
 
     @BeforeEach
     void setup() {
@@ -146,7 +145,8 @@ class LotteryControllerTest {
     @DisplayName("should return 500, when perform POST: /admin/lotteries with insert to DB failed")
     void addTicketFailedWhenInsertDB() {
         try {
-            doThrow(new DataAccessException("Mocked data access exception") {}).when(lotteryRepository).save(any(LotteryEntity.class));
+            doThrow(new DataAccessException("Mocked data access exception") {
+            }).when(lotteryRepository).save(any(LotteryEntity.class));
             mockMvc.perform(MockMvcRequestBuilders.post(ADD_TICKET_URL)
                     .content(stringify(request))
                     .headers(httpHeaders));
@@ -154,5 +154,46 @@ class LotteryControllerTest {
         } catch (Exception ex) {
             assertException(HttpStatus.INTERNAL_SERVER_ERROR, ex);
         }
+    }
+
+    @Test
+    @DisplayName("should return tickets, when perform GET: /lotteries")
+    void getAllTicketSuccess() throws Exception {
+        List<String> tickets = Arrays.asList("123456", "654321", "000000");
+        when(lotteryRepository.findTickets()).thenReturn(tickets);
+        mockMvc.perform(MockMvcRequestBuilders.get(GET_ALL_TICKET_URL)
+                        .content(stringify(request))
+                        .headers(httpHeaders))
+                .andExpect(jsonPath("$.tickets", is(tickets)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("should return [], when perform GET: /lotteries with no record in DB")
+    void getEmptyTicketSuccess() throws Exception {
+        List<String> tickets = List.of();
+        when(lotteryRepository.findTickets()).thenReturn(tickets);
+        mockMvc.perform(MockMvcRequestBuilders.get(GET_ALL_TICKET_URL)
+                        .content(stringify(request))
+                        .headers(httpHeaders))
+                .andExpect(jsonPath("$.tickets", is(tickets)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("should return 500, when perform GET: /lotteries with retrieve DB error")
+    void getTicketFailed() throws Exception {
+        List<String> tickets = List.of();
+        doThrow(new DataAccessException("Mocked data access exception") {
+        }).when(lotteryRepository).findTickets();
+
+        try {
+            mockMvc.perform(MockMvcRequestBuilders.get(GET_ALL_TICKET_URL)
+                    .content(stringify(request))
+                    .headers(httpHeaders));
+        } catch (Exception ex) {
+            assertException(HttpStatus.INTERNAL_SERVER_ERROR, ex);
+        }
+
     }
 }

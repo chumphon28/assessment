@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  app:
+    image: 'kbtg-post-test:latest'
+    build:
+      context: .
+    container_name: post-test-backend
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/posttest
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_SECURITY_USER_NAME=admin
+      - SPRING_SECURITY_USER.PASSWORD=password
+    ports:
+      - "8888:8888"
+
+  db:
+    image: postgres
+    container_name: db
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=posttest
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql

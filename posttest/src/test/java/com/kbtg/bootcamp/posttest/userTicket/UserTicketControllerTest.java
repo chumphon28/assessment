@@ -48,6 +48,7 @@ class UserTicketControllerTest {
 
     private final String BUY_TICKET_URL = "/users/%s/lotteries/%s";
     private final String GET_TICKET_BY_USER_URL = "/users/%s/lotteries";
+    private final String DELETE_TICKET_URL = "/users/%s/lotteries/%s";
 
     @BeforeEach
     void setup() {
@@ -196,7 +197,7 @@ class UserTicketControllerTest {
     }
 
     @Test
-    @DisplayName("should return 400 ticket, when perform GET: /users/:userId/lotteries with userId length < 10")
+    @DisplayName("should return 400, when perform GET: /users/:userId/lotteries with userId length < 10")
     void getTicketByUserFailedUserIdLengthLess() throws JsonProcessingException {
         String userId = "0";
         String url = String.format(GET_TICKET_BY_USER_URL, userId);
@@ -210,7 +211,7 @@ class UserTicketControllerTest {
     }
 
     @Test
-    @DisplayName("should return 400 ticket, when perform GET: /users/:userId/lotteries with userId length > 10")
+    @DisplayName("should return 400, when perform GET: /users/:userId/lotteries with userId length > 10")
     void getTicketByUserFailedUserIdLengthMore() throws JsonProcessingException {
         String userId = "00000111112";
         String url = String.format(GET_TICKET_BY_USER_URL, userId);
@@ -224,7 +225,7 @@ class UserTicketControllerTest {
     }
 
     @Test
-    @DisplayName("should return 404 ticket, when perform GET: /users/:userId/lotteries, with retrieve record not found")
+    @DisplayName("should return 404, when perform GET: /users/:userId/lotteries, with retrieve record not found")
     void getTicketByUserFailedRecordNotFound() throws Exception {
         String userId = "0000011111";
         String url = String.format(GET_TICKET_BY_USER_URL, userId);
@@ -241,7 +242,7 @@ class UserTicketControllerTest {
     }
 
     @Test
-    @DisplayName("should return 500 ticket, when perform GET: /users/:userId/lotteries, with retrieve record error")
+    @DisplayName("should return 500, when perform GET: /users/:userId/lotteries, with retrieve record error")
     void getTicketByUserFailedWhileRetrieveDB() throws Exception {
         String userId = "0000011111";
         String url = String.format(GET_TICKET_BY_USER_URL, userId);
@@ -256,6 +257,119 @@ class UserTicketControllerTest {
         } catch (Exception ex) {
             assertException(HttpStatus.INTERNAL_SERVER_ERROR, ex);
         }
+    }
+
+    @Test
+    @DisplayName("should return ticket, when perform DELETE: /users/:userId/lotteries/:ticketId")
+    void deleteUserTicketSuccess() throws Exception {
+        String url = String.format(DELETE_TICKET_URL, "0000011111", "123456");
+
+        LotteryEntity lottery = new LotteryEntity();
+        lottery.setId(1);
+        lottery.setTicket("123456");
+
+        when(userTicketRepository.deleteByUserIdAndTicket(anyString(), anyString())).thenReturn(1);
+
+        DeleteUserTicketResponse deleteUserTicketResponse = new DeleteUserTicketResponse("123456");
+
+        mockMvc.perform(MockMvcRequestBuilders.delete(url)
+                        .headers(httpHeaders))
+                .andExpect(jsonPath("$.ticket", is(deleteUserTicketResponse.getTicket())))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("should return 400, when perform DELETE: /users/:userId/lotteries/:ticketId, with userId length < 10")
+    void deleteUserTicketFailedUserIdLess() {
+        String url = String.format(DELETE_TICKET_URL, "0", "123456");
+
+        try {
+            mockMvc.perform(MockMvcRequestBuilders.delete(url)
+                    .headers(httpHeaders));
+        } catch (Exception ex) {
+            assertException(HttpStatus.BAD_REQUEST, ex);
+        }
+    }
+
+    @Test
+    @DisplayName("should return 400, when perform DELETE: /users/:userId/lotteries/:ticketId, with userId length > 10")
+    void deleteUserTicketFailedUserIdMore() {
+        String url = String.format(DELETE_TICKET_URL, "00000111112", "123456");
+
+        try {
+            mockMvc.perform(MockMvcRequestBuilders.delete(url)
+                    .headers(httpHeaders));
+        } catch (Exception ex) {
+            assertException(HttpStatus.BAD_REQUEST, ex);
+        }
+    }
+
+    @Test
+    @DisplayName("should return 400, when perform DELETE: /users/:userId/lotteries/:ticketId, with ticketId length > 6")
+    void deleteUserTicketFailedTicketIdMore() throws Exception {
+        String url = String.format(DELETE_TICKET_URL, "0000011111", "1234567");
+
+        try {
+            mockMvc.perform(MockMvcRequestBuilders.delete(url)
+                    .headers(httpHeaders));
+        } catch (Exception ex) {
+            assertException(HttpStatus.BAD_REQUEST, ex);
+        }
+    }
+
+    @Test
+    @DisplayName("should return 400, when perform DELETE: /users/:userId/lotteries/:ticketId, with ticketId length < 6")
+    void deleteUserTicketFailedTicketIdLess() throws Exception {
+        String url = String.format(DELETE_TICKET_URL, "0000011111", "0");
+
+        try {
+            mockMvc.perform(MockMvcRequestBuilders.delete(url)
+                    .headers(httpHeaders));
+        } catch (Exception ex) {
+            assertException(HttpStatus.BAD_REQUEST, ex);
+        }
+    }
+
+    // ticket not found
+    @Test
+    @DisplayName("should return 404, when perform DELETE: /users/:userId/lotteries/:ticketId, with delete 0 record ")
+    void deleteUserTicketFailedRecordNotFound() throws Exception {
+        String url = String.format(DELETE_TICKET_URL, "0000011111", "123456");
+
+        LotteryEntity lottery = new LotteryEntity();
+        lottery.setId(1);
+        lottery.setTicket("123456");
+
+        when(userTicketRepository.deleteByUserIdAndTicket(anyString(), anyString())).thenReturn(0);
+
+        try {
+            mockMvc.perform(MockMvcRequestBuilders.delete(url)
+                    .headers(httpHeaders));
+        } catch (Exception ex) {
+            assertException(HttpStatus.NOT_FOUND, ex);
+        }
+
+    }
+
+    @Test
+    @DisplayName("should return 500, when perform DELETE: /users/:userId/lotteries/:ticketId, with delete error ")
+    void deleteUserTicketFailedRecordDBError() throws Exception {
+        String url = String.format(DELETE_TICKET_URL, "0000011111", "123456");
+
+        LotteryEntity lottery = new LotteryEntity();
+        lottery.setId(1);
+        lottery.setTicket("123456");
+
+        doThrow(new DataAccessException("Mocked data access exception") {
+        }).when(userTicketRepository).deleteByUserIdAndTicket(anyString(), anyString());
+
+        try {
+            mockMvc.perform(MockMvcRequestBuilders.delete(url)
+                    .headers(httpHeaders));
+        } catch (Exception ex) {
+            assertException(HttpStatus.INTERNAL_SERVER_ERROR, ex);
+        }
+
     }
 
     public List<UserTicketEntity> prepareUserTicketList(String userId) throws JsonProcessingException {

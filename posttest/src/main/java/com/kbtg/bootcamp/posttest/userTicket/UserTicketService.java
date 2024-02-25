@@ -6,6 +6,7 @@ import com.kbtg.bootcamp.posttest.lottery.LotteryRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ public class UserTicketService {
         this.lotteryRepository = lotteryRepository;
     }
 
+    @Transactional
     public BuyTicketResponse buyTicket(String userId, String ticket) {
         try {
 
@@ -74,9 +76,27 @@ public class UserTicketService {
             throw new CustomException(ce.getHttpStatus(), ce.getMessage());
         } catch (Exception ex) {
             log.error("error while buy ticket", ex);
-            throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "Get Ticket failed");
+            throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "Get user ticket failed");
         }
+    }
 
+    @Transactional
+    public DeleteUserTicketResponse deleteUserTicket(String userId, String ticket) {
 
+        try {
+            int affectRow = userTicketRepository.deleteByUserIdAndTicket(userId, ticket);
+
+            if (affectRow < 1) {
+                log.warn("delete user ticket 0 record");
+                throw new CustomException(HttpStatus.NOT_FOUND, "ticket or userId not found");
+            }
+
+            return new DeleteUserTicketResponse(ticket);
+        } catch (CustomException ce) {
+            throw new CustomException(ce.getHttpStatus(), ce.getMessage());
+        } catch (Exception ex) {
+            log.error("error while delete ticket with userId: {}", userId, ex);
+            throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "delete user ticket failed");
+        }
     }
 }

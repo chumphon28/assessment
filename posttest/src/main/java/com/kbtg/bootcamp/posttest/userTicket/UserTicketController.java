@@ -3,10 +3,7 @@ package com.kbtg.bootcamp.posttest.userTicket;
 import com.kbtg.bootcamp.posttest.exception.CustomException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class UserTicketController {
@@ -42,6 +39,21 @@ public class UserTicketController {
         GetUserTicketResponse getUserTicketResponse = userTicketService.getUserTicket(userId);
 
         return new ResponseEntity<>(getUserTicketResponse, HttpStatus.OK);
+    }
+
+    @DeleteMapping(value = "/users/{userId}/lotteries/{ticketId}")
+    public ResponseEntity<DeleteUserTicketResponse> getUserTicket(
+            @PathVariable("userId")
+            String userId,
+            @PathVariable("ticketId")
+            String ticketId) {
+        if (validateBuyTicketBody(userId, 10) || validateBuyTicketBody(ticketId, 6)) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "Invalid input");
+        }
+
+        DeleteUserTicketResponse deleteUserTicketResponse = userTicketService.deleteUserTicket(userId, ticketId);
+
+        return new ResponseEntity<>(deleteUserTicketResponse, HttpStatus.OK);
     }
 
     private boolean validateBuyTicketBody(String input, int size) {

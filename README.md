@@ -1,6 +1,10 @@
 # How to start application
 
 ## With docker compose (application, database)
+- create gradle
+  ```
+  gradle wrapper 
+  ```
 - Build application image
 	``` 
 	docker build -t kbtg-post-test . 
